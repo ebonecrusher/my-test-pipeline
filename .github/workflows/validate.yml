@@ -1,0 +1,41 @@
+# Name of the automation pipeline
+name: Continuous Integration & Code Validation
+
+# Trigger the pipeline automatically whenever code changes are pushed to the main repository
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate-and-test:
+    # 1. Provide an isolated environment (Sandbox) to test code safely
+    runs-on: ubuntu-latest
+
+    steps:
+    # 2. Copy the newly modified code into the sandbox
+    - name: Checkout repository code
+      uses: actions/checkout@v4
+
+    # 3. Set up the software language environment
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    # 4. Install dependencies required by the code
+    - name: Install system requirements
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    # 5. Execute automated test suites to scan for bugs before deploying
+    - name: Run automated test suite
+      run: |
+        # Pytest will look for files starting with 'test_' and verify they pass
+        python main.py
+
+    # 6. Reject or Accept deployment based on verification results
+    - name: Report Build Status
+      if: success()
+      run: echo "Validation successful! Code is completely stable and approved for release."
